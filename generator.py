@@ -1,4 +1,3 @@
-from time import sleep
 from copy import deepcopy
 import random
 from collections import Counter
@@ -6,6 +5,10 @@ import tcod as libtcod
 
 
 class CellGrid:
+    """
+    A wrapper for a list of lists.
+    Initialize each list element randomly to 0 (with P=1-density) or 1 (with P=density)
+    """
     def __init__(self, width, height, density):
         self.height = height
         self.width = width
@@ -14,7 +17,7 @@ class CellGrid:
     def get_cell(self, x, y):
         try:
             return self.cells[y][x]
-        except IndexError as e:
+        except IndexError:
             return None
 
     def set_cell(self, x, y, val):
@@ -25,14 +28,18 @@ class CellGrid:
 
 
 class CellularAutomaton:
+    """
+    Abstract class for 2D cellular Automaton.
+    Can advance to next state and return a CellGrid object.
+    """
     def __init__(self, width, height, density=0.5, edge_default=1):
-        self.edge_default = edge_default
+        self._edge_default = edge_default
         self.cells = CellGrid(width, height, density=density)
 
-    def next_generation(self, neighbor_counts: dict, state:int) -> int:
+    def next_generation(self, neighbor_counts: dict, state: int) -> int:
         raise NotImplementedError("Abstract method: subclass must implement.")
 
-    def get_neighborhood(self, x, y):
+    def _get_neighborhood(self, x, y):
         neighborhood = list()
         for dx in [-1, 0, 1]:
             for dy in [-1, 0, 1]:
@@ -41,29 +48,28 @@ class CellularAutomaton:
                     if nbr is not None:
                         neighborhood.append(nbr)
                     else:
-                        neighborhood.append(self.edge_default)
+                        neighborhood.append(self._edge_default)
         return neighborhood
 
-    def neighbor_profile(self, x, y):
-        return Counter(self.get_neighborhood(x, y))
+    def _neighbor_profile(self, x, y):
+        return Counter(self._get_neighborhood(x, y))
 
-    def next_state(self, x, y):
-        return self.next_generation(self.neighbor_profile(x, y), self.cells.get_cell(x, y))
+    def _next_state(self, x, y):
+        return self.next_generation(self._neighbor_profile(x, y), self.cells.get_cell(x, y))
 
     def advance_state(self):
         next_state = deepcopy(self.cells)
         for x in range(self.cells.width):
             for y in range(self.cells.height):
-                next_state.set_cell(x, y, self.next_state(x, y))
+                next_state.set_cell(x, y, self._next_state(x, y))
         self.cells = next_state
 
 
-class TestAutomaton(CellularAutomaton):
+class CaveGenerator(CellularAutomaton):
     def next_generation(self, neighbor_counts, state):
         if neighbor_counts[1] > 4:
             return 1
-        else:
-            return 0
+        return 0
 
 
 class ConwayAutomaton(CellularAutomaton):
@@ -74,22 +80,20 @@ class ConwayAutomaton(CellularAutomaton):
             return 1
         return 0
 
-class AutomatonObserver:
 
-    tileset = libtcod.tileset.load_tilesheet(
-        "img.png", 32, 8, libtcod.tileset.CHARMAP_TCOD,
-    )
-    def __init__(self, state, mapping):
-        self.mapping = mapping
-        self.refresh = True
+class GridView:
+    """
+    Display a CellGrid object (self._state) using the tcod library.
+    Colours for cells determined by the dict self._mapping.
+    """
+    TILE_SET = libtcod.tileset.load_tilesheet('img.png', 32, 8, libtcod.tileset.CHARMAP_TCOD)
+
+    def __init__(self, state: CellGrid, mapping: dict, pix_size=800):
+        self._mapping = mapping
         self._state = state
-        self.pix_size =3
-        self.context = libtcod.context.new_window(width=self.pix_size*self.state.width,
-                                                  height=self.pix_size*self.state.height,
-                                                  tileset=self.tileset)
-        self.con = self.context.new_console( min_columns=self.state.width,
-                                            min_rows=self.state.height,
-                                            magnification=0.9)
+        self._context = libtcod.context.new_window(width=pix_size, height=pix_size, tileset=self.TILE_SET)
+        self._console = self._context.new_console(min_columns=self.state.width, min_rows=self.state.height)
+        self._show()
 
     @property
     def state(self):
@@ -98,22 +102,23 @@ class AutomatonObserver:
     @state.setter
     def state(self, new_state):
         self._state = new_state
-        self.show()
+        self._show()
 
-    def show(self):
-        self.con.clear()
+    def _show(self):
+        self._console.clear()
         for y in range(self.state.height):
             for x in range(self.state.width):
-                color = self.mapping[self.state.get_cell(x, y)]
-                self.con.print(x, y, ' ', bg=color)
-        self.context.present(self.con)
+                color = self._mapping[self.state.get_cell(x, y)]
+                self._console.print(x, y, ' ', bg=color)
+        self._context.present(self._console)
 
 
 if __name__ == '__main__':
-    mapping = {0: (255,255,255), 1:(0,0,0)}
-    aut = TestAutomaton(500, 500, edge_default=1, density=0.6)
-    observer = AutomatonObserver(aut.cells, mapping)
-    for i in range(10):
+    MAPPING = {0: (255, 255, 255), 1: (0, 0, 0)}
+    aut = CaveGenerator(100, 100, density=0.6)
+    observer = GridView(aut.cells, MAPPING)
+    input("hit enter")
+    for i in range(5):
         aut.advance_state()
         observer.state = aut.cells
         input("hit enter")
