@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>d3 and canvas</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<script src="http://d3js.org/d3.v4.js"></script>
+<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+
+
+<div id="container"></div>
+<script>
+
+function httpGet(theUrl) {
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.open( "GET", theUrl, false ); // false for synchronous request
+    xmlHttp.send( null );
+    return xmlHttp.responseText;
+}
+
+var mydata = JSON.parse(httpGet('http://localhost:5000/cave'));   // JSON.parse(caves1);
+console.log(mydata);
+tile_size = 8
+spacing = 0.25
+var width = (tile_size + spacing)*mydata['num_cols'];
+var height = (tile_size + spacing)*mydata['num_rows'];
+var canvas = d3.select('#container')
+  .append('canvas')
+  .attr('width', width)
+  .attr('height', height);
+var context = canvas.node().getContext('2d')
+
+var customBase = document.createElement('custom');
+var custom = d3.select(customBase); // this is our svg replacement
+
+function databind(data) {
+  var colorMap = {0:"#a3a396", 1: "#21211f"}
+
+  var join = custom.selectAll('custom.rect').data(data);
+
+  var enterSel = join.enter()
+    .append('custom')
+    .attr('class', 'rect')
+    .attr("x", function(d, i) {
+      return d["x"]*(tile_size + spacing)
+    })
+    .attr("y", function(d, i) {
+      return d["y"]*(tile_size + spacing)
+    })
+    .attr('width', tile_size)
+    .attr('height', tile_size)
+    .attr('fillStyle', function(d) { return colorMap[d['val']]; });
+
+}
+function draw() {
+  // clear canvas 
+  context.clearRect(0, 0, width, height);
+  // draw each individual custom element with their properties 
+  var elements = custom.selectAll('custom.rect') 
+  // select all our custom elements
+  elements.each(function(d,i) {   
+    // for each virtual/custom element... 
+    var node = d3.select(this); 
+    // each individual element in the loop   
+    // apply colour  
+    context.fillStyle = node.attr('fillStyle'); 
+      // and here we draw the square  
+    context.fillRect(node.attr('x'), node.attr('y'),   
+                    node.attr('width'), node.attr('height'))
+  }); // loop through each element
+
+}
+
+console.log(mydata['data'])
+databind(mydata['data']); // Build the custom elements in memory 
+draw();   
+
+</script>
+
+</body>
+

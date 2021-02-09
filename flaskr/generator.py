@@ -2,6 +2,7 @@ from copy import deepcopy
 import random
 from collections import Counter
 import tcod as libtcod
+import json
 
 
 class CellGrid:
@@ -25,6 +26,18 @@ class CellGrid:
             self.cells[y][x] = val
         except IndexError:
             raise Warning(f'index {x} {y} out of range')
+
+    def to_json(self):
+        dump_dict = {
+            'num_rows': self.height,
+            'num_cols': self.width,
+            'data': list()
+                     }
+        for x in range(self.width):
+            for y in range(self.height):
+                dump_dict['data'].append({'x': x, 'y': y, 'val':self.get_cell(x, y)})
+
+        return json.dumps(dump_dict)
 
 
 class CellularAutomaton:
@@ -115,10 +128,13 @@ class GridView:
 
 if __name__ == '__main__':
     MAPPING = {0: (255, 255, 255), 1: (0, 0, 0)}
-    aut = CaveGenerator(100, 100, density=0.6)
+    aut = CaveGenerator(100, 100, density=0.59)
     observer = GridView(aut.cells, MAPPING)
     input("hit enter")
     for i in range(5):
         aut.advance_state()
         observer.state = aut.cells
-        input("hit enter")
+        inpt = input("hit enter")
+        if inpt.strip() == 's':
+            aut.cells.to_json('caves1.json')
+
