@@ -2,16 +2,28 @@ from noise import pnoise2
 import json
 from random import randint
 
+OCEAN_BLUE = '#028bad'
 
-def noise_grid(width, height, dec_places):
-    base = randint(0, 100)  # we don't want the same thing every time
+
+def get_noise_value(nx, ny, freq, base):
+    raw = pnoise2(freq*nx, freq*ny, repeatx=freq+1, repeaty=freq+1, base=base)  # this is between -1 and 1
+    return (raw + 1) / 2  # between 0 and 1
+
+
+def coord_transform(x, max_x):
+    """Transform coordinate x in [0, max_x] to a value in [-1, 1]"""
+    return (x/max_x - 0.5)*2
+
+
+def noise_grid(width, height, freq, dec_places=2):
+    base = randint(0, 20)  # we don't want the same thing every time
     result = list()
     for y in range(height):
         result.append(list())
         for x in range(width):
-            nx = (x/width - 0.5)*2
-            ny = (y/height - 0.5)*2
-            n_val = (pnoise2(nx, ny, repeatx=1, repeaty=1, base=base) + 1) / 2  # between 0 and 1
+            nx = coord_transform(x, width)
+            ny = coord_transform(y, height)
+            n_val = get_noise_value(nx, ny, freq, base)
             n_val = round(n_val, dec_places)
             result[y].append(n_val)
     return result
@@ -28,17 +40,20 @@ def css_greyscale(int_val):
     return '#'+hex_string(int_val)*3
 
 
-def color_mapping(num_dec_place):
+def color_mapping(num_dec_place, water_level=0.473):
     resolution = 10**num_dec_place
     shades = [x/resolution for x in range(resolution + 1)]
     mapping = dict()
     for shade in shades:
-        mapping[shade] = css_greyscale(int(255*shade))
+        if shade < water_level:
+            mapping[shade] = OCEAN_BLUE
+        else:
+            mapping[shade] = css_greyscale(int(255*shade))
     return mapping
 
 
-def to_json(width, height, dec_places=2):
-    ng = noise_grid(width, height, dec_places)
+def to_json(width, height, freq, dec_places=3):
+    ng = noise_grid(width, height, freq, dec_places)
     dump_dict = {'num_rows': height, 'num_cols': width, 'color_map': color_mapping(dec_places), 'data': list()}
     for y in range(height):
         for x in range(width):
