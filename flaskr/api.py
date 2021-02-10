@@ -22,4 +22,4 @@ def get_cave():
 @app.route('/noise')
 def get_noise():
     """returns an implementation of the MapData interface"""
-    return flaskr.make_noise.to_json(100, 100)
+    return flaskr.make_noise.to_json(100, 100, freq=4)
