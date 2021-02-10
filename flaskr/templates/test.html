@@ -20,7 +20,8 @@ function httpGet(theUrl) {
     return xmlHttp.responseText;
 }
 
-var mydata = JSON.parse(httpGet('http://localhost:5000/cave'));   // JSON.parse(caves1);
+var mydata = JSON.parse(httpGet('http://localhost:5000/{{data_source}}'));   // JSON.parse(caves1);
+var colorMap = mydata['color_map']
 console.log(mydata);
 tile_size = 8
 spacing = 0.25
@@ -35,8 +36,7 @@ var context = canvas.node().getContext('2d')
 var customBase = document.createElement('custom');
 var custom = d3.select(customBase); // this is our svg replacement
 
-function databind(data) {
-  var colorMap = {0:"#a3a396", 1: "#21211f"}
+function databind(data, colorMap) {
 
   var join = custom.selectAll('custom.rect').data(data);
 
@@ -51,7 +51,7 @@ function databind(data) {
     })
     .attr('width', tile_size)
     .attr('height', tile_size)
-    .attr('fillStyle', function(d) { return colorMap[d['val']]; });
+    .attr('fillStyle', function(d) { return colorMap[d["val"]] });
 
 }
 function draw() {
@@ -74,7 +74,7 @@ function draw() {
 }
 
 console.log(mydata['data'])
-databind(mydata['data']); // Build the custom elements in memory 
+databind(mydata['data'], colorMap); // Build the custom elements in memory
 draw();   
 
 </script>

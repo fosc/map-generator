@@ -31,6 +31,7 @@ class CellGrid:
         dump_dict = {
             'num_rows': self.height,
             'num_cols': self.width,
+            'color_map': {0: "#a3a396", 1: "#21211f"},
             'data': list()
                      }
         for x in range(self.width):
