@@ -1,6 +1,6 @@
 from flask import Flask, render_template
 from flaskr.generator import CaveGenerator
-import flaskr.make_noise
+from flaskr.make_noise import MapBuilder
 app = Flask(__name__)
 
 
@@ -22,4 +22,4 @@ def get_cave():
 @app.route('/noise')
 def get_noise():
     """returns an implementation of the MapData interface"""
-    return flaskr.make_noise.to_json(100, 100, freq=4)
+    return MapBuilder(100, 100).map_data()
