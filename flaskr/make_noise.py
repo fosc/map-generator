@@ -1,4 +1,10 @@
-"""Create a JSON string with the to_json function. This string is a instance of Map Data"""
+"""
+Create a JSON string with the MapBuilder class. This JSON object is a instance of Map Data:
+1. num_rows --> int
+2. num_cols --> int
+3. data --> [...{x: 9, y: 45, val: '0.x' }...]
+4. color_map --> {...,0.463: '#404040',...}
+"""
 import json
 from configparser import ConfigParser
 from noise import pnoise2
