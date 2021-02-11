@@ -47,6 +47,7 @@ def color_mapping(config):
 
 
 class Grid:
+    """A list of lists representing a grid of map tiles"""
     def __init__(self, width, height):
         self._grid = list()
         for y in range(height):
@@ -71,6 +72,7 @@ class Grid:
 
 
 class NoiseGrid(Grid):
+    """A Grid with a perlin noise value for each tile"""
     def __init__(self, width, height, config='Default'):
         super().__init__(width, height)
         try:
@@ -106,11 +108,13 @@ class NoiseGrid(Grid):
 
 
 class MapBuilder:
+    """Creates a MapData JSON object"""
     def __init__(self, width, height, config='Default'):
         self.noise_grid = NoiseGrid(width, height, config)
         self.color_map = color_mapping(config)
 
     def map_data(self):
+        """Returns a MapData JSON object"""
         dump_dict = self.noise_grid.to_dict()
         dump_dict['color_map'] = self.color_map
         return json.dumps(dump_dict)
