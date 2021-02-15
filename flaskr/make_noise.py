@@ -10,6 +10,10 @@ from configparser import ConfigParser
 from noise import pnoise2
 
 OCEAN_BLUE = '#028bad'
+FOREST = '#096e00'
+GRASS = '#8df783'
+MOUNTAIN = '#596e57'
+
 CONFIG_FILE = '../config.ini'
 CONFIG_READER = ConfigParser()
 CONFIG_READER.read(CONFIG_FILE)
@@ -28,10 +32,17 @@ def css_greyscale(int_val):
     return '#'+hex_string(int_val)*3
 
 
+def in_range(num, rng):
+    return rng[0] < num <= rng[1]
+
+
 def color_mapping(config):
     try:
         dec_places = int(CONFIG_READER[config]['decimal_places'])
         water_level = float(CONFIG_READER[config]['water_level'])
+        forest = json.loads(CONFIG_READER[config]['forest'])
+        grass = json.loads(CONFIG_READER[config]['grass'])
+        mountain = json.loads(CONFIG_READER[config]['mountains'])
     except KeyError:
         raise Exception(f'{CONFIG_FILE} section {config} is missing required value(s).')
 
@@ -39,8 +50,14 @@ def color_mapping(config):
     shades = [x/resolution for x in range(resolution + 1)]
     mapping = dict()
     for shade in shades:
-        if shade < water_level:
+        if shade <= water_level:
             mapping[shade] = OCEAN_BLUE
+        elif in_range(shade, forest):
+            mapping[shade] = FOREST
+        elif in_range(shade, grass):
+            mapping[shade] = GRASS
+        elif in_range(shade, mountain):
+            mapping[shade] = MOUNTAIN
         else:
             mapping[shade] = css_greyscale(int(255*shade))
     return mapping

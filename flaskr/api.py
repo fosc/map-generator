@@ -22,4 +22,4 @@ def get_cave():
 @app.route('/noise')
 def get_noise():
     """returns an implementation of the MapData interface"""
-    return MapBuilder(100, 100).map_data()
+    return MapBuilder(150, 150, config='Continents').map_data()
